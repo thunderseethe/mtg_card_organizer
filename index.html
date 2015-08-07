@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style type="text/css">
+			span.ui-helper-hidden-accessible{
+				display:none;
+			}
+			form {
+				margin-bottom: 20px;
+				float:left;
+			}
+			table {
+				width:100%;
+				border-collapse: collapse;
+			}
+			th {
+				background-color:#333;
+				color:white;
+			}
+			td{
+				text-align: center;
+			}
+			ul {
+				list-style-type: none;
+				background-color: white;
+				border: 1px solid #33333F;
+				border-top: none;
+				width: -webkit-max-content !important;
+				padding-left: 0px;
+			}
+			li {
+				padding:5px 10px;
+				border-bottom: 1px solid #CFCFCF;
+			}
+			li.ui-state-focus {
+				background-color: #EFEFEF;
+				color:rgb(2, 92, 198);
+			}
+			li:last-child{
+				border-bottom: none;
+			}
+		</style>
+	</head>
+
+	<body>
+		<!-- This form never actually submits to a server, everything is done client side, check the js below -->
+		<form action="" method="get" id="add_card">
+			<input type="text" name="card_name" id="card_name" />
+			<input type="submit" value="Add" name="add" />
+		</form>
+		<table id="set" border="1">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Mana Cost</th>
+					<th>Type</th>
+					<th>Text</th>
+					<th>Power</th>
+					<th>Toughness</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+		<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+		<script src="all_cards.js"></script>
+		<script type="text/javascript">
+			if(!String.prototype.format){
+				String.prototype.format = function(){
+					var args = arguments;
+					return this.replace(/{(\d+)}/g, function(match, number){
+						return (typeof args[number] != 'undefined') ? args[number] : ""; 
+					});
+				}
+			}
+
+			/* APPLICATION */
+			function view(model){
+				//This function takes an object of cards and coverts it to a string of <tr/> elements to show in our table
+				var rows = [];
+				for(key in model){
+					var card = model[key];
+					var row = "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td></tr>";
+					rows.push(row.format(card.name, card.manaCost, card.type, card.text, card.power, card.toughness));
+				}
+				return rows.join("\n");
+			}
+
+			//variable cards is loaded from all_cards.js
+			var name_list = Object.keys(cards);
+			//this is just an alias
+			var storage = window.localStorage;
+			//If a set was already started show what we have so far from localStorage
+			var set = storage["set"] ? JSON.parse(storage["set"]) : {};
+			$("#set>tbody").html(view(set));
+			
+			$("#card_name").autocomplete({
+				source: name_list
+			});
+
+			$("#add_card").on('submit', function(event){
+				//Don't actually reload the page for the form submit
+				event.preventDefault();
+				var name = $("#card_name").val();
+				if(!name) return;
+				if(cards[name])
+					set[name] = cards[name];
+				$("#set>tbody").html(view(set));
+				$("#card_name").val('');
+			});
+
+			//When we leave the page store our card set persistently with javascript's localStorage API
+			$(window).on("beforeunload", function(event){
+				storage["set"] = JSON.stringify(set);
+			});
+		</script>
+	</body>
+</html>
